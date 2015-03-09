@@ -8,8 +8,8 @@ function [J grad] = nnCostFunction(nn_params, ...
 %   [J grad] = NNCOSTFUNCTON(nn_params, hidden_layer_size, num_labels, ...
 %   X, y, lambda) computes the cost and gradient of the neural network. The
 %   parameters for the neural network are "unrolled" into the vector
-%   nn_params and need to be converted back into the weight matrices. 
-% 
+%   nn_params and need to be converted back into the weight matrices.
+%
 %   The returned parameter grad should be a "unrolled" vector of the
 %   partial derivatives of the neural network.
 %
@@ -24,8 +24,8 @@ Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):en
 
 % Setup some useful variables
 m = size(X, 1);
-         
-% You need to return the following variables correctly 
+
+% You need to return the following variables correctly
 J = 0;
 Theta1_grad = zeros(size(Theta1));
 Theta2_grad = zeros(size(Theta2));
@@ -46,12 +46,12 @@ Theta2_grad = zeros(size(Theta2));
 %         that your implementation is correct by running checkNNGradients
 %
 %         Note: The vector y passed into the function is a vector of labels
-%               containing values from 1..K. You need to map this vector into a 
+%               containing values from 1..K. You need to map this vector into a
 %               binary vector of 1's and 0's to be used with the neural network
 %               cost function.
 %
 %         Hint: We recommend implementing backpropagation using a for-loop
-%               over the training examples if you are implementing it for the 
+%               over the training examples if you are implementing it for the
 %               first time.
 %
 % Part 3: Implement regularization with the cost function and gradients.
@@ -63,18 +63,66 @@ Theta2_grad = zeros(size(Theta2));
 %
 
 
+% Added the x0=1 for all test cases index to matrix
+
+
+% Evaluating h(x)for the neural network
+A1 = [ones(m,1) X];
+
+Z2 = A1 * Theta1';
+A2 = sigmoid(Z2);
+
+A2 = [ones(size(A2, 1),1) A2];
+Z3 = A2 * Theta2';
+A3 = sigmoid(Z3);
+
+hx = A3;
+
+% Evaluating Cost function without Regularization
+
+% Evaluate yk
+yk = zeros(m, num_labels);
+
+for K = 1:num_labels
+  yk(:, K) = (y == (zeros(m,1) + K));
+end
+
+f1 = -1 * ((log (hx)) .* yk);
+f2 = -1 * ((log( 1 - hx)) .* ( 1 - yk));
+
+J = f1 + f2;
+
+J = (1 / m) * sum(sum(J));
 
 
 
+% Regularization parameters
+
+Theta1_clone = Theta1;
+Theta1_clone(:,1) = 0;
+Theta2_clone = Theta2;
+Theta2_clone(:,1) = 0;
+
+R1 = sum(sum(Theta1_clone .* Theta1_clone));
+R2 = sum(sum(Theta2_clone .* Theta2_clone));
 
 
+J = J + ((lambda / (2 *m)) * (R1 + R2));
 
 
+%Backpropagation
+
+delta3 = A3 - yk;
+%delta3(:,1) = 0;
+
+delta2_temp = Theta2(:, 2:end)' * delta3';
+
+delta2 =  delta2_temp' .* (sigmoidGradient(Z2));
 
 
+Theta2_grad = (1 / m) * delta3' * A2 +   ((lambda / m ) *  Theta2_clone);
 
-
-
+Theta1_grad = (1 / m) * delta2' * A1 +   ((lambda / m ) *  Theta1_clone);
 
 
 
@@ -89,3 +137,5 @@ grad = [Theta1_grad(:) ; Theta2_grad(:)];
 
 
 end
+
+
